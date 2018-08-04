@@ -12,3 +12,17 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.0.5" % Test
 )
 
+
+scalacOptions ++= Seq(
+  "-deprecation",
+  "-encoding", "UTF-8",
+  "-language:higherKinds",
+  "-language:postfixOps",
+  "-feature",
+  "-unchecked",
+  "-Xfuture",
+  "-Xlint",
+  "-Yno-adapted-args",
+  "-Ypartial-unification",
+  "-Ywarn-numeric-widen",
+  "-Ywarn-value-discard")
