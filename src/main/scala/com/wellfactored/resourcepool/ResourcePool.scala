@@ -24,15 +24,12 @@ trait ResourcePool[F[_], T] {
 
 object ResourcePool {
   def withResources[F[_] : Concurrent : Timer, T](resources: List[T]): F[ResourcePool[F, T]] = {
-    val ioq: F[Queue[F, T]] = Queue.unbounded[F, T]
-
     for {
-      q <- ioq
+      q <- Queue.unbounded[F, T]
       _ <- resources.traverse(q.enqueue1)
     } yield new ResourcePool[F, T] {
       override def runWithResource[A](f: T => F[A])(timeout: FiniteDuration): F[A] = {
         val timer: F[A] = Timer[F].sleep(timeout) >> (throw TimeoutException)
-
         val op = Bracket[F, Throwable].bracket(q.dequeue1)(f)(q.enqueue1)
 
         Concurrent[F].race(op, timer).map {
