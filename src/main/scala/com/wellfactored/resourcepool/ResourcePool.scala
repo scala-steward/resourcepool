@@ -37,14 +37,9 @@ object ResourcePool {
     new ResourcePool[F, T] {
       override def runWithResource[A](f: T => F[A])(timeout: FiniteDuration): F[A] = {
         val timer: F[A] = timerF.sleep(timeout) >> (throw TimeoutException)
-        val op = concF.bracket(q.dequeue1)(f)(q.enqueue1)
+        val op: F[A] = concF.bracket(q.dequeue1)(f)(q.enqueue1)
 
-        concF.race(op, timer).map {
-          case Left(a) => a
-
-          // The timer will never return an a, but need to match it for completeness
-          case Right(a) => a
-        }
+        concF.race(op, timer).map(_.merge)
       }
     }
 }

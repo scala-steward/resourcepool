@@ -25,5 +25,7 @@ scalacOptions ++= Seq(
   "-Yno-adapted-args",
   "-Ypartial-unification",
   "-Ywarn-numeric-widen",
-  "-Ywarn-value-discard")
+  "-Ywarn-value-discard",
+  "-Xfatal-warnings"
+)
 
