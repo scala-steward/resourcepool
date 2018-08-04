@@ -23,11 +23,18 @@ trait ResourcePool[F[_], T] {
 }
 
 object ResourcePool {
-  def withResources[F[_], T](resources: List[T])(implicit concF: Concurrent[F], timerF: Timer[F]): F[ResourcePool[F, T]] = {
+  def withResources[F[_] : Concurrent : Timer, T](resources: List[T]): F[ResourcePool[F, T]] = {
     for {
       q <- Queue.unbounded[F, T]
       _ <- resources.traverse(q.enqueue1)
-    } yield new ResourcePool[F, T] {
+    } yield poolForQueue(q)
+  }
+
+  /**
+    * Create a ResourcePool backed by a Queue that has been initialised with a set of resources
+    */
+  private def poolForQueue[T, F[_]](q: Queue[F, T])(implicit concF: Concurrent[F], timerF: Timer[F]): ResourcePool[F, T] =
+    new ResourcePool[F, T] {
       override def runWithResource[A](f: T => F[A])(timeout: FiniteDuration): F[A] = {
         val timer: F[A] = timerF.sleep(timeout) >> (throw TimeoutException)
         val op = concF.bracket(q.dequeue1)(f)(q.enqueue1)
@@ -40,6 +47,5 @@ object ResourcePool {
         }
       }
     }
-  }
 }
 
