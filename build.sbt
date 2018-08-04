@@ -26,3 +26,4 @@ scalacOptions ++= Seq(
   "-Ypartial-unification",
   "-Ywarn-numeric-widen",
   "-Ywarn-value-discard")
+
