@@ -1,6 +1,6 @@
 package com.wellfactored.resourcepool
 
-import cats.effect.{Bracket, Concurrent, Timer}
+import cats.effect.{Concurrent, Timer}
 import cats.instances.list._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -23,16 +23,16 @@ trait ResourcePool[F[_], T] {
 }
 
 object ResourcePool {
-  def withResources[F[_] : Concurrent : Timer, T](resources: List[T]): F[ResourcePool[F, T]] = {
+  def withResources[F[_], T](resources: List[T])(implicit concF: Concurrent[F], timerF: Timer[F]): F[ResourcePool[F, T]] = {
     for {
       q <- Queue.unbounded[F, T]
       _ <- resources.traverse(q.enqueue1)
     } yield new ResourcePool[F, T] {
       override def runWithResource[A](f: T => F[A])(timeout: FiniteDuration): F[A] = {
-        val timer: F[A] = Timer[F].sleep(timeout) >> (throw TimeoutException)
-        val op = Bracket[F, Throwable].bracket(q.dequeue1)(f)(q.enqueue1)
+        val timer: F[A] = timerF.sleep(timeout) >> (throw TimeoutException)
+        val op = concF.bracket(q.dequeue1)(f)(q.enqueue1)
 
-        Concurrent[F].race(op, timer).map {
+        concF.race(op, timer).map {
           case Left(a) => a
 
           // The timer will never return an a, but need to match it for completeness
