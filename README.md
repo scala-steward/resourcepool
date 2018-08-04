@@ -1,0 +1,1 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/6acf5bcce68d4730afdd8378bdec255b)](https://www.codacy.com/project/doug/resourcepool/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=WellFactored/resourcepool&amp;utm_campaign=Badge_Grade_Dashboard)
