@@ -1,7 +1,6 @@
 package com.wellfactored.resourcepool
 
 import cats.effect.IO
-import cats.instances.list._
 import org.scalatest.{EitherValues, Matchers, WordSpecLike}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -36,14 +35,16 @@ class ResourcePoolTest extends WordSpecLike with Matchers with EitherValues {
   }
 
   "when two functions that take 75ms" should {
+    def runTwoFunctions(resources: List[String]) = ResourcePool.withResources[IO, String](resources).flatMap { pool =>
+      for {
+        a <- pool.runWithResource(_ => IO.sleep(75 milliseconds))(100 milliseconds).start
+        b <- pool.runWithResource(_ => IO.sleep(75 milliseconds))(100 milliseconds).start
+      } yield (a.join, b.join)
+    }
+
     "are run with a timeout of 100ms and only one resource then the second should fail" in {
-      val io = ResourcePool.withResources[IO, String](List("a")).flatMap { pool =>
-        for {
-          a <- pool.runWithResource(_ => IO.sleep(75 milliseconds))(100 milliseconds).start
-          b <- pool.runWithResource(_ => IO.sleep(75 milliseconds))(100 milliseconds).start
-        } yield (a.join, b.join)
-      }
-      val (r1, r2) = io.unsafeRunSync()
+      val (r1, r2) = runTwoFunctions(List("a")).unsafeRunSync()
+
       // The first function should succeed
       r1.attempt.unsafeRunSync() shouldBe a[Right[_, _]]
 
@@ -53,13 +54,7 @@ class ResourcePoolTest extends WordSpecLike with Matchers with EitherValues {
     }
 
     "are run with a timeout of 100ms and two resources then the both should succeed" in {
-      val io = ResourcePool.withResources[IO, String](List("a", "b")).flatMap { pool =>
-        for {
-          a <- pool.runWithResource(_ => IO.sleep(75 milliseconds))(100 milliseconds).start
-          b <- pool.runWithResource(_ => IO.sleep(75 milliseconds))(100 milliseconds).start
-        } yield (a.join, b.join)
-      }
-      val (r1, r2) = io.unsafeRunSync()
+      val (r1, r2) = runTwoFunctions(List("a", "b")).unsafeRunSync()
 
       r1.attempt.unsafeRunSync() shouldBe a[Right[_, _]]
       r2.attempt.unsafeRunSync() shouldBe a[Right[_, _]]
