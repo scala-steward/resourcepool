@@ -1,14 +1,17 @@
 package com.wellfactored.resourcepool
 
+import cats.Parallel
 import cats.effect.IO
-import org.scalatest.{EitherValues, Matchers, WordSpecLike}
+import cats.implicits._
+import cats.temp.par.Par
+import org.scalatest.{EitherValues, FreeSpecLike, Matchers}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-class ResourcePoolTest extends WordSpecLike with Matchers with EitherValues {
+class ResourcePoolTest extends FreeSpecLike with Matchers with EitherValues {
 
-  "A simple function" should {
+  "A simple function" - {
     "return the right string" in {
       val expected = "expected string"
       val iop = ResourcePool.withResources[IO, String](List(expected))
@@ -21,7 +24,7 @@ class ResourcePoolTest extends WordSpecLike with Matchers with EitherValues {
     }
   }
 
-  "A function that takes too long" should {
+  "A function that takes too long" - {
     "result in a TimeoutException" in {
       val expected = "expected string"
       val iop = ResourcePool.withResources[IO, String](List(expected))
@@ -34,7 +37,7 @@ class ResourcePoolTest extends WordSpecLike with Matchers with EitherValues {
     }
   }
 
-  "when two functions that take 75ms" should {
+  "when two functions that take 75ms" - {
     def runTwoFunctions(resources: List[String]) = ResourcePool.withResources[IO, String](resources).flatMap { pool =>
       for {
         a <- pool.runWithResource(_ => IO.sleep(75 milliseconds))(100 milliseconds).start
@@ -58,6 +61,45 @@ class ResourcePoolTest extends WordSpecLike with Matchers with EitherValues {
 
       r1.attempt.unsafeRunSync() shouldBe a[Right[_, _]]
       r2.attempt.unsafeRunSync() shouldBe a[Right[_, _]]
+    }
+  }
+
+
+  "Multiple function calls" - {
+    // A mutable resource that all the function calls will modify.
+    var flag: Boolean = false
+
+    def f(s: String): IO[Unit] = for {
+      _ <- IO.suspend {
+        if (flag) IO.raiseError(new Exception("flag is set")) else IO {
+          flag = true
+        }
+      }
+      _ <- IO.sleep(1 millis)
+      _ <- IO.suspend {
+        if (!flag) IO.raiseError(new Exception("flag is not set")) else IO {
+          flag = false
+        }
+      }
+    } yield ()
+
+    val par = implicitly[Par[IO]]
+
+    def runWithResources(resources: List[String]): List[Either[Throwable, Unit]] = {
+      ResourcePool.withResources[IO, String](resources).flatMap { pool =>
+        implicit val parallel: Parallel[IO, par.ParAux] = par.parallel
+
+        // Run the function calls in parallel so that if there are any conflicting accesses to the flag they will show up
+        (1 to 500).toList.map { _ => pool.runWithResource[Unit](f)(100 seconds).attempt }.parTraverse(identity)
+      }.unsafeRunSync()
+    }
+
+    "against a single pooled resource should run without conflicting access to the shared state" in {
+      runWithResources(List("a")).foreach(_ shouldBe a[Right[_, _]])
+    }
+
+    "against two pooled resources should end up with conflicting access to the shared state" in {
+      runWithResources(List("a", "b")).exists(_.isLeft) shouldBe true
     }
   }
 }

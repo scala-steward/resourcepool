@@ -9,7 +9,9 @@ crossScalaVersions := Seq("2.12.6", "2.11.12")
 
 libraryDependencies ++= Seq(
   "co.fs2" %% "fs2-core" % "1.0.0-M2",
-  "org.scalatest" %% "scalatest" % "3.0.5" % Test
+
+  "org.scalatest" %% "scalatest" % "3.0.5" % Test,
+  "io.chrisdavenport" %% "cats-par" % "0.2.0" % Test,
 )
 
 
