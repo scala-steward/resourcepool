@@ -90,7 +90,7 @@ class ResourcePoolTest extends FreeSpecLike with Matchers with EitherValues {
         implicit val parallel: Parallel[IO, par.ParAux] = par.parallel
 
         // Run the function calls in parallel so that if there are any conflicting accesses to the flag they will show up
-        (1 to 500).toList.map { _ => pool.runWithResource[Unit](f)(100 seconds).attempt }.parTraverse(identity)
+        (1 to 100).toList.parTraverse { _ => pool.runWithResource[Unit](f)(100 seconds).attempt }
       }.unsafeRunSync()
     }
 
