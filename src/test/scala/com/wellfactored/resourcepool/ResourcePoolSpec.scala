@@ -9,12 +9,12 @@ import org.scalatest.{EitherValues, FreeSpecLike, Matchers}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-class ResourcePoolTest extends FreeSpecLike with Matchers with EitherValues {
+class ResourcePoolSpec extends FreeSpecLike with Matchers with EitherValues {
 
   "A simple function" - {
     "return the right string" in {
       val expected = "expected string"
-      val iop = ResourcePool.withResources[IO, String](List(expected))
+      val iop = ResourcePool.of[IO, String](List(expected))
 
       val io = iop.flatMap { pool =>
         pool.runWithResource(s => IO(s))(100 milliseconds)
@@ -27,7 +27,7 @@ class ResourcePoolTest extends FreeSpecLike with Matchers with EitherValues {
   "A function that takes too long" - {
     "result in a TimeoutException" in {
       val expected = "expected string"
-      val iop = ResourcePool.withResources[IO, String](List(expected))
+      val iop = ResourcePool.of[IO, String](List(expected))
 
       val io = iop.flatMap { pool =>
         pool.runWithResource(s => IO.sleep(200 milliseconds))(100 milliseconds)
@@ -38,7 +38,7 @@ class ResourcePoolTest extends FreeSpecLike with Matchers with EitherValues {
   }
 
   "when two functions that take 75ms" - {
-    def runTwoFunctions(resources: List[String]) = ResourcePool.withResources[IO, String](resources).flatMap { pool =>
+    def runTwoFunctions(resources: List[String]) = ResourcePool.of[IO, String](resources).flatMap { pool =>
       for {
         a <- pool.runWithResource(_ => IO.sleep(75 milliseconds))(100 milliseconds).start
         b <- pool.runWithResource(_ => IO.sleep(75 milliseconds))(100 milliseconds).start
@@ -86,7 +86,7 @@ class ResourcePoolTest extends FreeSpecLike with Matchers with EitherValues {
     val par = implicitly[Par[IO]]
 
     def runWithResources(resources: List[String]): List[Either[Throwable, Unit]] = {
-      ResourcePool.withResources[IO, String](resources).flatMap { pool =>
+      ResourcePool.of[IO, String](resources).flatMap { pool =>
         implicit val parallel: Parallel[IO, par.ParAux] = par.parallel
 
         // Run the function calls in parallel so that if there are any conflicting accesses to the flag they will show up
