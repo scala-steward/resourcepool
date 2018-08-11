@@ -3,7 +3,12 @@ name := "resourcepool"
 
 organization := "com.wellfactored"
 scalaVersion := "2.12.6"
-version      := "0.1.0-SNAPSHOT"
+version := "0.1.0-SNAPSHOT"
+startYear := Some(2018)
+organizationName := "Well-Factored Software Ltd."
+licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt"))
+
+enablePlugins(AutomateHeaderPlugin)
 
 libraryDependencies ++= Seq(
   "co.fs2" %% "fs2-core" % "1.0.0-M2",
