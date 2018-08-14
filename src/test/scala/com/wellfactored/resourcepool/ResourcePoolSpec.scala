@@ -54,7 +54,7 @@ class ResourcePoolSpec extends FreeSpecLike with Matchers with EitherValues {
   }
 
   "when two functions that take 75ms" - {
-    def runTwoFunctions(resources: List[String]) = ResourcePool.of[IO, String](resources).flatMap { pool =>
+    def runTwoFunctions(resources: List[String]): IO[(IO[Unit], IO[Unit])] = ResourcePool.of[IO, String](resources).flatMap { pool =>
       for {
         a <- pool.runWithResource(_ => IO.sleep(75 milliseconds))(100 milliseconds).start
         b <- pool.runWithResource(_ => IO.sleep(75 milliseconds))(100 milliseconds).start
