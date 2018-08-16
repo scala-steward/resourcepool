@@ -17,7 +17,7 @@
 package com.wellfactored.resourcepool
 
 import cats.effect.concurrent.MVar
-import cats.effect.{Concurrent, Timer}
+import cats.effect.{Concurrent, ExitCase, Timer}
 import cats.instances.list._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -55,24 +55,24 @@ object ResourcePool {
   /**
     * Build a pool that is populated with the provided resources
     */
-  def of[F[_] : Concurrent : Timer, T](resources: List[T]): F[ResourcePool[F, T]] = {
+  def of[F[_] : Concurrent : Timer, T](resources: List[T], sanityCheck: (T, ExitCase[Throwable]) => F[T]): F[ResourcePool[F, T]] = {
     for {
       q <- Queue.unbounded[F, T]
       _ <- resources.traverse(q.enqueue1)
-    } yield of(q)
+    } yield of(q, sanityCheck)
   }
 
   /**
     * Create a ResourcePool backed by a Queue that has been initialised with a set of resources
     */
-  private def of[T, F[_]](q: Queue[F, T])(implicit concF: Concurrent[F], timerF: Timer[F]): ResourcePool[F, T] =
-    new QueueBackedPool(q)
+  private def of[T, F[_]](q: Queue[F, T], sanityCheck: (T, ExitCase[Throwable]) => F[T])(implicit concF: Concurrent[F], timerF: Timer[F]): ResourcePool[F, T] =
+    new QueueBackedPool(q, sanityCheck)
 
 
   /**
     * This implementation uses an FS2 mutable Queue to manage the resources.
     */
-  class QueueBackedPool[F[_], T](q: Queue[F, T])(implicit concF: Concurrent[F], timerF: Timer[F]) extends ResourcePool[F, T] {
+  class QueueBackedPool[F[_], T](q: Queue[F, T], sanityCheck: (T, ExitCase[Throwable]) => F[T])(implicit concF: Concurrent[F], timerF: Timer[F]) extends ResourcePool[F, T] {
     private val cleanupMVar: F[MVar[F, T => F[Unit]]] =
       MVar.empty[F, T => F[Unit]]
 
@@ -126,10 +126,10 @@ object ResourcePool {
       * If the pool is not closed then return the resource to the queue, otherwise clean it up
       * by running the cleanup function on it and do not return it to the pool.
       */
-    private def requeueOrCleanup(t: T): F[Unit] = for {
+    private def requeueOrCleanup(t: T, exit: ExitCase[Throwable]): F[Unit] = for {
       closed <- isClosed
       _ <- if (closed) cleanupMVar.flatMap(_.take).map(cleanup => cleanup(t))
-           else q.enqueue1(t)
+           else sanityCheck(t, exit).flatMap(q.enqueue1)
     } yield ()
 
     /**
@@ -138,9 +138,9 @@ object ResourcePool {
       */
     private def runTimed[A](f: T => F[A], timeout: FiniteDuration): F[A] = {
       val timer: F[A] = timerF.sleep(timeout) >> (throw TimeoutException)
-      val op: F[A] = concF.bracket(q.dequeue1)(f)(requeueOrCleanup)
+      concF.bracketCase(q.dequeue1)(t => concF.race(f(t), timer))(requeueOrCleanup).map(_.merge)
 
-      concF.race(op, timer).map(_.merge)
+      //concF.race(op, timer).map(_.merge)
     }
   }
 }

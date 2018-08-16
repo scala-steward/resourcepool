@@ -29,7 +29,7 @@ class ResourcePoolClosingSpec extends FreeSpecLike with Matchers with EitherValu
       val resources: List[Resource] = List.fill(5)(Resource())
 
       val test = for {
-        pool <- ResourcePool.of[IO, Resource](resources)
+        pool <- ResourcePool.of[IO, Resource](resources, (t, _) => IO.pure(t))
         _ <- pool.close(cleanup)
       } yield resources
 

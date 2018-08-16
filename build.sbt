@@ -3,7 +3,7 @@ name := "resourcepool"
 
 organization := "com.wellfactored"
 scalaVersion := "2.12.6"
-version := "0.1.1"
+version := "1.0.0"
 startYear := Some(2018)
 organizationName := "Well-Factored Software Ltd."
 licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.txt"))
