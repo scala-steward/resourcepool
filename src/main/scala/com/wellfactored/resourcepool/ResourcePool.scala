@@ -22,7 +22,7 @@ import cats.instances.list._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.traverse._
-import fs2.async.mutable.Queue
+import fs2.concurrent.Queue
 
 import scala.concurrent.duration.FiniteDuration
 import scala.language.higherKinds

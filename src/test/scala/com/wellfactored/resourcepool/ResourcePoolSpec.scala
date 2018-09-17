@@ -25,7 +25,7 @@ import org.scalatest.{EitherValues, FreeSpecLike, Matchers}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-class ResourcePoolSpec extends FreeSpecLike with Matchers with EitherValues {
+class ResourcePoolSpec extends FreeSpecLike with Matchers with EitherValues with IOSpec {
 
   "A simple function" - {
     "return the right string" in {
