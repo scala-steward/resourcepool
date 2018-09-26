@@ -17,7 +17,6 @@ libraryDependencies ++= Seq(
   "io.chrisdavenport" %% "cats-par" % "0.2.0" % Test,
 )
 
-
 scalacOptions ++= Seq(
   "-deprecation",
   "-encoding", "UTF-8",

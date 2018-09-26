@@ -1,2 +1,3 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/6acf5bcce68d4730afdd8378bdec255b)](https://www.codacy.com/project/doug/resourcepool/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=WellFactored/resourcepool&amp;utm_campaign=Badge_Grade_Dashboard)
 [![CircleCI](https://circleci.com/gh/WellFactored/resourcepool/tree/master.svg?style=svg)](https://circleci.com/gh/WellFactored/resourcepool/tree/master)
+[![codecov](https://codecov.io/gh/WellFactored/resourcepool/branch/master/graph/badge.svg)](https://codecov.io/gh/WellFactored/resourcepool)
