@@ -57,7 +57,7 @@ object ResourcePool {
     */
   def of[F[_] : Concurrent : Timer, T](resources: List[T], sanityCheck: (T, ExitCase[Throwable]) => F[T]): F[ResourcePool[F, T]] = {
     for {
-      q <- Queue.unbounded[F, T]
+      q <- Queue.bounded[F, T](resources.length)
       _ <- resources.traverse(q.enqueue1)
     } yield of(q, sanityCheck)
   }
@@ -109,7 +109,9 @@ object ResourcePool {
       for {
         _ <- raiseErrorIfClosed
         _ <- cleanupMVar.flatMap(_.put(cleanup))
-        ts <- q.dequeue.compile.toList
+        // A rather awkward replacement for `.dequeueBatch1` which went away in
+        // fs2 1.0.0-RC1. This will deque all the items that are currently in the queue
+        ts <- fs2.Stream(Int.MaxValue).through(q.dequeueBatch).compile.toList
         _ <- ts.traverse(cleanup)
       } yield ()
     }

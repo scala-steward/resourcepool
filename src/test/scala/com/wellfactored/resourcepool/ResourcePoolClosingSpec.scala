@@ -34,7 +34,8 @@ class ResourcePoolClosingSpec extends FreeSpecLike with Matchers with EitherValu
         _ <- pool.close(cleanup)
       } yield resources
 
-      test.unsafeRunSync().foreach(_.cleanupCalled shouldBe true)
+      val list = test.unsafeRunSync()
+      list.foreach(_.cleanupCalled shouldBe true)
     }
   }
 }
