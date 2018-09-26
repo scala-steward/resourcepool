@@ -109,11 +109,9 @@ object ResourcePool {
       for {
         _ <- raiseErrorIfClosed
         _ <- cleanupMVar.flatMap(_.put(cleanup))
-        chunk <- q.dequeueBatch1(Int.MaxValue)
-      } yield {
-        chunk.map(cleanup)
-        ()
-      }
+        ts <- q.dequeue.compile.toList
+        _ <- ts.traverse(cleanup)
+      } yield ()
     }
 
     private def raiseErrorIfClosed: F[Unit] =
