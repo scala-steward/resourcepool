@@ -110,7 +110,7 @@ object ResourcePool {
         _ <- raiseErrorIfClosed
         _ <- cleanupMVar.flatMap(_.put(cleanup))
         // A rather awkward replacement for `.dequeueBatch1` which went away in
-        // fs2 1.0.1. This will deque all the items that are currently in the queue
+        // fs2 1.0.2. This will deque all the items that are currently in the queue
         ts <- fs2.Stream(Int.MaxValue).through(q.dequeueBatch).compile.toList
         _ <- ts.traverse(cleanup)
       } yield ()
