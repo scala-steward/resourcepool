@@ -14,7 +14,7 @@ libraryDependencies ++= Seq(
   "co.fs2" %% "fs2-core" % "1.0.3",
 
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
-  "io.chrisdavenport" %% "cats-par" % "0.2.0" % Test,
+  "io.chrisdavenport" %% "cats-par" % "0.2.1" % Test,
 )
 
 scalacOptions ++= Seq(
