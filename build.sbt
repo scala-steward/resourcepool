@@ -13,8 +13,7 @@ enablePlugins(AutomateHeaderPlugin)
 libraryDependencies ++= Seq(
   "co.fs2" %% "fs2-core" % "2.0.0",
 
-  "org.scalatest" %% "scalatest" % "3.0.8" % Test,
-  "io.chrisdavenport" %% "cats-par" % "0.2.1" % Test,
+  "org.scalatest" %% "scalatest" % "3.0.8" % Test
 )
 
 scalacOptions ++= Seq(
