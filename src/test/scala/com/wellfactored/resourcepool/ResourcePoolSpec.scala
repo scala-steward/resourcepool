@@ -18,13 +18,15 @@ package com.wellfactored.resourcepool
 
 import cats.effect.IO
 import cats.implicits._
-import org.scalatest.{EitherValues, FreeSpecLike, Matchers}
+import org.scalatest.EitherValues
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import org.scalatest.freespec.AnyFreeSpecLike
+import org.scalatest.matchers.should.Matchers
 
 class ResourcePoolSpec
-    extends FreeSpecLike
+    extends AnyFreeSpecLike
     with Matchers
     with EitherValues
     with IOSpec {
