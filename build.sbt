@@ -11,7 +11,7 @@ licenses += ("Apache-2.0", new URL("https://www.apache.org/licenses/LICENSE-2.0.
 enablePlugins(AutomateHeaderPlugin)
 
 libraryDependencies ++= Seq(
-  "co.fs2" %% "fs2-core" % "2.1.0",
+  "co.fs2" %% "fs2-core" % "2.2.0",
 
   "org.scalatest" %% "scalatest" % "3.1.0" % Test
 )
